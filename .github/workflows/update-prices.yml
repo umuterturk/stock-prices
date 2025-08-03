@@ -9,6 +9,8 @@ on:
 jobs:
   update-prices:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
       - name: Checkout repository
@@ -36,4 +38,7 @@ jobs:
         run: |
           git add data/
           git commit -m "Update stock prices for $(date +'%Y-%m-%d')" || echo "No changes to commit"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
           git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

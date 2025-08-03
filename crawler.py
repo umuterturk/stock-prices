@@ -3,11 +3,9 @@
 Stock price crawler that fetches daily prices and saves them in a GitHub Pages friendly format.
 """
 
-import os
-import sys
-import json
 import datetime
 import requests
+import time
 from pathlib import Path
 from bs4 import BeautifulSoup
 
@@ -35,15 +33,6 @@ MARKETS = {
     }
 }
 
-# TEFAS fund codes and names for reference
-TEFAS_FUNDS = {
-    "HFA": "HSBC PORTFÖY ALLİANZ SERBEST ÖZEL FON",
-    "YAY": "YAPI KREDİ PORTFÖY YENİLENEBİLİR ENERJİ DEĞİŞKEN FON",
-    "TTE": "TEB PORTFÖY EUROBOND (DÖVİZ) BORÇLANMA ARAÇLARI FONU",
-    "TI2": "TEB PORTFÖY İKİNCİ HİSSE SENEDİ FONU",
-    "AFT": "AK PORTFÖY PETROL YABANCI BYF FON SEPETİ FONU"
-}
-
 # Base directory for storing price data
 DATA_DIR = Path("data")
 
@@ -68,13 +57,13 @@ def fetch_price(ticker, market):
 
 def fetch_yahoo_price(ticker):
     """Fetch the latest price for a given ticker using Yahoo Finance API."""
-    # Using Yahoo Finance API
-    # In a production environment, you might want to use a more reliable API
-    # or implement proper error handling and rate limiting
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
     
     try:
-        response = requests.get(url)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers)
         response.raise_for_status()
         data = response.json()
         
@@ -99,14 +88,9 @@ def fetch_tefas_price(fund_code):
         # Parse the HTML content
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Find the price element - this is based on the structure we observed
-        # The price appears to be in a div after the "Son Fiyat (TL)" label
-        # We'll try a few different approaches to find it
-        
         # Approach 1: Look for the element that contains "Son Fiyat (TL)" and get the next element
         price_label = soup.find(string=lambda text: text and "Son Fiyat (TL)" in text)
         if price_label:
-            # Navigate to the parent element and find the next sibling that contains the price
             price_container = price_label.find_parent().find_next_sibling()
             if price_container:
                 price_text = price_container.get_text().strip()
@@ -114,13 +98,11 @@ def fetch_tefas_price(fund_code):
                 price = float(price_text.replace('.', '').replace(',', '.'))
                 return round(price, 6)  # TEFAS prices typically have 6 decimal places
         
-        # Approach 2: Try to find by specific class or structure
-        # This is a fallback if the first approach doesn't work
+        # Approach 2: Fallback to searching by specific class or structure
         price_elements = soup.select("div.field-value, span.price-value, td.price-cell")
         for element in price_elements:
             text = element.get_text().strip()
             try:
-                # Convert from Turkish format (comma as decimal separator) to float
                 price = float(text.replace('.', '').replace(',', '.'))
                 return round(price, 6)
             except ValueError:
@@ -138,8 +120,6 @@ def save_price(market, ticker, price, date=None):
         date = datetime.datetime.now().strftime("%Y-%m-%d")
     
     ticker_dir = DATA_DIR / market / ticker
-    
-    # Get currency symbol from market config
     currency = MARKETS[market]["currency"]
     
     # Load the HTML template
@@ -218,8 +198,7 @@ def save_error_page(market, ticker, error_message, date=None):
             with open(latest_txt_path, "r") as f:
                 latest_price = f.read().strip()
             
-            # Try to find the date of the last successful fetch
-            # Look for the most recent HTML file that's not today's
+            # Find the date of the last successful fetch
             today = datetime.datetime.now().strftime("%Y-%m-%d")
             html_files = list(ticker_dir.glob("*.html"))
             date_files = [f for f in html_files if f.stem != "latest" and f.stem != today]
@@ -313,9 +292,6 @@ def save_error_page(market, ticker, error_message, date=None):
         # Save to date-specific file
         with open(ticker_dir / f"{date}.html", "w") as f:
             f.write(html_content)
-            
-        # Don't update the latest.html file if we're showing an error
-        # This way, latest.html will always show the last successful price
         
         # Save error to text file for API consumers
         with open(ticker_dir / f"{date}.txt", "w") as f:
@@ -340,8 +316,7 @@ def main():
                 price = fetch_price(ticker, market)
                 
                 if price is not None:
-                    currency = config["currency"]
-                    print(f"{ticker}: {currency}{price}")
+                    print(f"{ticker}: {config['currency']}{price}")
                     save_price(market, ticker, price)
                     success_count += 1
                 else:
@@ -349,6 +324,9 @@ def main():
                     print(f"Error for {ticker}: {error_message}")
                     save_error_page(market, ticker, error_message)
                     error_count += 1
+                
+                # Add a delay between requests to avoid rate limiting
+                time.sleep(2)
             except Exception as e:
                 error_message = f"Exception while processing {ticker}: {str(e)}"
                 print(error_message)
@@ -357,6 +335,9 @@ def main():
                 except Exception as inner_e:
                     print(f"Critical error saving error page for {ticker}: {inner_e}")
                 error_count += 1
+                
+                # Add a delay after errors too
+                time.sleep(2)
     
     print(f"\nCompleted at {datetime.datetime.now()}")
     print(f"Summary: {success_count} successful, {error_count} failed")
