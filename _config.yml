@@ -1,0 +1,4 @@
+theme: jekyll-theme-minimal
+title: Stock Price API
+description: A simple, no-cost stock price API that serves daily stock prices via GitHub Pages.
+show_downloads: false

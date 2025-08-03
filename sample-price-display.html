@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<!-- 
+    This is a template file used by the crawler.py script to generate price display pages.
+    Edit this file to change the design of all generated price pages.
+    The following placeholders will be replaced with actual values:
+    - id="ticker">AAPL        -> Replaced with actual ticker
+    - id="currency">$         -> Replaced with actual currency symbol
+    - id="price">182.63       -> Replaced with actual price
+    - id="date">2023-05-15    -> Replaced with actual date
+    - id="market">us          -> Replaced with actual market
+    - <title>AAPL Price - Sample</title> -> Replaced with actual title
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AAPL Price - Sample</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        .price-container {
+            text-align: center;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-width: 300px;
+        }
+        .ticker {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #343a40;
+        }
+        .price-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+        .currency {
+            font-size: 2rem;
+            margin-right: 0.25rem;
+            color: #495057;
+        }
+        .price {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #212529;
+        }
+        .date {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 1rem;
+        }
+        .market {
+            font-size: 0.9rem;
+            background-color: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            display: inline-block;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="price-container">
+        <div class="ticker" id="ticker">AAPL</div>
+        <div class="price-wrapper">
+            <div class="currency" id="currency">$</div>
+            <div class="price" id="price">182.63</div>
+        </div>
+        <div class="date" id="date">2023-05-15</div>
+        <div class="market" id="market">us</div>
+    </div>
+</body>
+</html>

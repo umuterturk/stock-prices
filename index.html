@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Price API</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        code {
+            background-color: #f5f5f5;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stock Price API</h1>
+    <p>A simple, no-cost stock price API that serves daily stock prices via GitHub Pages.</p>
+    
+    <h2>How to Use</h2>
+    <p>Access stock prices using these URL patterns:</p>
+    <ul>
+        <li>Latest price: <code>https://[your-username].github.io/prices-to-github/[market]/[ticker]/latest</code></li>
+        <li>Specific date: <code>https://[your-username].github.io/prices-to-github/[market]/[ticker]/YYYY-MM-DD</code></li>
+    </ul>
+    
+    <h3>Examples:</h3>
+    <pre># Plain text format
+https://[your-username].github.io/prices-to-github/us/AAPL/latest.txt
+https://[your-username].github.io/prices-to-github/uk/BP.L/2023-12-31.txt
+
+# HTML format with styled display
+https://[your-username].github.io/prices-to-github/us/AAPL/latest.html
+https://[your-username].github.io/prices-to-github/tr-tefas/HFA/latest.html</pre>
+    
+    <p>Each endpoint is available in two formats:</p>
+    <ul>
+        <li><strong>Plain text (.txt):</strong> Returns only the price value</li>
+        <li><strong>HTML (.html):</strong> Returns a styled page with ticker name, currency symbol, and price</li>
+    </ul>
+    
+    <h3>HTML Price Display Example</h3>
+    <p>The HTML format provides a clean, stylish display of the price data. You can view examples of the display format in these files:</p>
+    <ul>
+        <li><a href="sample-price-display.html">Sample Price Display</a> - Shows how successful price fetches are displayed</li>
+        <li><a href="sample-error-display.html">Sample Error Display</a> - Shows how errors are handled and displayed</li>
+    </ul>
+    
+    <h3>Error Handling</h3>
+    <p>The system includes robust error handling to ensure reliability:</p>
+    <ul>
+        <li>If fetching a price fails, the system continues processing other tickers</li>
+        <li>The latest successful price is preserved and shown with a warning</li>
+        <li>Error messages are clearly displayed to help diagnose issues</li>
+    </ul>
+    
+    <h2>Supported Markets and Tickers</h2>
+    
+    <h3>US Market (<code>/us/</code>)</h3>
+    <table>
+        <tr>
+            <th>Ticker</th>
+            <th>Company</th>
+        </tr>
+        <tr>
+            <td>AAPL</td>
+            <td>Apple Inc.</td>
+        </tr>
+        <tr>
+            <td>MSFT</td>
+            <td>Microsoft Corporation</td>
+        </tr>
+        <tr>
+            <td>GOOGL</td>
+            <td>Alphabet Inc.</td>
+        </tr>
+        <tr>
+            <td>AMZN</td>
+            <td>Amazon.com, Inc.</td>
+        </tr>
+        <tr>
+            <td>META</td>
+            <td>Meta Platforms, Inc.</td>
+        </tr>
+        <tr>
+            <td>TSLA</td>
+            <td>Tesla, Inc.</td>
+        </tr>
+        <tr>
+            <td>NVDA</td>
+            <td>NVIDIA Corporation</td>
+        </tr>
+        <tr>
+            <td>JPM</td>
+            <td>JPMorgan Chase & Co.</td>
+        </tr>
+        <tr>
+            <td>V</td>
+            <td>Visa Inc.</td>
+        </tr>
+        <tr>
+            <td>WMT</td>
+            <td>Walmart Inc.</td>
+        </tr>
+    </table>
+    
+    <h3>UK Market (<code>/uk/</code>)</h3>
+    <table>
+        <tr>
+            <th>Ticker</th>
+            <th>Company</th>
+        </tr>
+        <tr>
+            <td>BARC.L</td>
+            <td>Barclays PLC</td>
+        </tr>
+        <tr>
+            <td>HSBA.L</td>
+            <td>HSBC Holdings PLC</td>
+        </tr>
+        <tr>
+            <td>BP.L</td>
+            <td>BP PLC</td>
+        </tr>
+        <tr>
+            <td>SHEL.L</td>
+            <td>Shell PLC</td>
+        </tr>
+        <tr>
+            <td>ULVR.L</td>
+            <td>Unilever PLC</td>
+        </tr>
+    </table>
+    
+    <h3>European Market (<code>/eu/</code>)</h3>
+    <table>
+        <tr>
+            <th>Ticker</th>
+            <th>Company</th>
+        </tr>
+        <tr>
+            <td>AIR.PA</td>
+            <td>Airbus SE</td>
+        </tr>
+        <tr>
+            <td>ASML.AS</td>
+            <td>ASML Holding NV</td>
+        </tr>
+        <tr>
+            <td>SAP.DE</td>
+            <td>SAP SE</td>
+        </tr>
+        <tr>
+            <td>SAN.MC</td>
+            <td>Banco Santander SA</td>
+        </tr>
+        <tr>
+            <td>ENEL.MI</td>
+            <td>Enel SpA</td>
+        </tr>
+    </table>
+    
+    <h3>Turkish TEFAS Funds (<code>/tr-tefas/</code>)</h3>
+    <table>
+        <tr>
+            <th>Ticker</th>
+            <th>Fund Name</th>
+        </tr>
+        <tr>
+            <td>HFA</td>
+            <td>HSBC PORTFÖY ALLİANZ SERBEST ÖZEL FON</td>
+        </tr>
+        <tr>
+            <td>YAY</td>
+            <td>YAPI KREDİ PORTFÖY YENİLENEBİLİR ENERJİ DEĞİŞKEN FON</td>
+        </tr>
+        <tr>
+            <td>TTE</td>
+            <td>TEB PORTFÖY EUROBOND (DÖVİZ) BORÇLANMA ARAÇLARI FONU</td>
+        </tr>
+        <tr>
+            <td>TI2</td>
+            <td>TEB PORTFÖY İKİNCİ HİSSE SENEDİ FONU</td>
+        </tr>
+        <tr>
+            <td>AFT</td>
+            <td>AK PORTFÖY PETROL YABANCI BYF FON SEPETİ FONU</td>
+        </tr>
+    </table>
+    
+    <h2>Data Update Frequency</h2>
+    <p>Prices are updated once daily after market close.</p>
+    
+    <h2>API Status</h2>
+    <p>Last updated: <span id="last-updated">Loading...</span></p>
+    
+    <script>
+        // Fetch the latest update time
+        fetch('data/us/AAPL/latest.txt')
+            .then(response => {
+                if (response.ok) {
+                    const lastModified = response.headers.get('last-modified');
+                    if (lastModified) {
+                        document.getElementById('last-updated').textContent = new Date(lastModified).toLocaleString();
+                    } else {
+                        document.getElementById('last-updated').textContent = 'Unknown';
+                    }
+                } else {
+                    document.getElementById('last-updated').textContent = 'API not yet initialized';
+                }
+            })
+            .catch(error => {
+                document.getElementById('last-updated').textContent = 'Error checking API status';
+            });
+    </script>
+</body>
+</html>

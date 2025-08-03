@@ -1,0 +1,39 @@
+name: Update Stock Prices
+
+on:
+  schedule:
+    # Run once a day at 8:30 PM UTC (after US market close)
+    - cron: '30 20 * * 1-5'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Run crawler
+        run: python crawler.py
+        
+      - name: Configure Git
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          
+      - name: Commit and push changes
+        run: |
+          git add data/
+          git commit -m "Update stock prices for $(date +'%Y-%m-%d')" || echo "No changes to commit"
+          git push
