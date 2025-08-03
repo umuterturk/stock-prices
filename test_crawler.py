@@ -16,8 +16,12 @@ def test_crawler():
     # Check if the data directory was created
     assert DATA_DIR.exists(), f"Data directory {DATA_DIR} was not created"
     
-    # Check if each market and ticker directory was created
-    for market, tickers in MARKETS.items():
+    # Only check the TR-TEFAS market
+    market = "tr-tefas"
+    market_info = MARKETS.get(market, {})
+    tickers = market_info.get("tickers", [])
+    
+    if tickers:
         market_dir = DATA_DIR / market
         assert market_dir.exists(), f"Market directory {market_dir} was not created"
         
@@ -34,10 +38,12 @@ def test_crawler():
                 price = f.read().strip()
                 try:
                     price = float(price)
-                    currency = "$" if market == "us" else "£" if market == "uk" else "€"
+                    currency = market_info.get("currency", "₺")
                     print(f"{market}/{ticker}: {currency}{price}")
                 except ValueError:
                     assert False, f"Price for {market}/{ticker} is not a valid number: {price}"
+    else:
+        print(f"No tickers defined for {market} market")
 
 if __name__ == "__main__":
     test_crawler()

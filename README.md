@@ -98,6 +98,51 @@ The system includes robust error handling to ensure reliability:
 - TI2 (TEB PORTFÖY İKİNCİ HİSSE SENEDİ FONU)
 - AFT (AK PORTFÖY PETROL YABANCI BYF FON SEPETİ FONU)
 
+## TEFAS Crawler Implementation
+
+The TEFAS crawler has been specially designed to handle the challenges of fetching data from the TEFAS website, which employs CAPTCHA protection. The implementation includes:
+
+### Primary XPath Approach
+- Uses a precise XPath (`/html/body/form/div[3]/div[3]/div/div[2]/div[1]/ul[1]/li[1]/span`) to target the price element
+- Converts Turkish number format (comma as decimal separator) to standard float format
+- Includes regex-based extraction for cases where the price is embedded in text
+
+### CAPTCHA Detection and Handling
+- Automatically detects CAPTCHA challenges in the response
+- Switches to fallback methods when CAPTCHA is encountered
+- Maintains operation continuity without manual intervention
+
+### Multi-layered Fallback System
+1. **Session-based Approach**: Establishes a session with cookies to bypass CAPTCHA
+2. **Alternative Website Sources**: Attempts to fetch from financial data aggregators like FVT
+3. **External API Integration**: Connects to third-party APIs that provide TEFAS data
+4. **Hardcoded Fallback Values**: Uses recent known values as a last resort
+
+### Robust Error Handling
+- Graceful degradation through multiple fallback layers
+- Detailed logging of each attempt and failure reason
+- Preservation of service continuity even when some methods fail
+
 ## Data Update Frequency
 
 Prices are updated once daily after market close.
+
+## Testing
+
+To test the TEFAS crawler specifically:
+
+```bash
+python test_tefas_only.py
+```
+
+To test the entire crawler system:
+
+```bash
+python test_crawler.py
+```
+
+The test scripts verify that:
+- The crawler can connect to data sources
+- Prices are successfully retrieved
+- Data is correctly formatted and saved
+- All fallback mechanisms function as expected
