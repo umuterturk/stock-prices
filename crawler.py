@@ -31,7 +31,7 @@ MARKETS = {
         "currency": "€"
     },
     "tr-tefas": {
-        "tickers": ["HFA", "YAY", "TTE", "TI2", "AFT", "IIE"],
+        "tickers": ["HFA", "YAY", "TTE", "TI2", "AFT", "IIE", "BDS"],
         "crawler": "tefas",
         "currency": "₺"
     }
