@@ -307,29 +307,54 @@ def fetch_tefas_price_fallback(fund_code):
         print(f"Error in fallback method for {fund_code}: {e}")
         return None
 
+def get_currency_code(currency_symbol):
+    """Convert currency symbol to ISO currency code."""
+    currency_map = {
+        "$": "USD",
+        "£": "GBP",
+        "€": "EUR",
+        "₺": "TRY"
+    }
+    return currency_map.get(currency_symbol, "USD")
+
+def render_template(template_content, replacements):
+    """Render a template by replacing placeholders with actual values."""
+    result = template_content
+    for placeholder, value in replacements.items():
+        result = result.replace(f'{{{{{placeholder}}}}}', str(value))
+    return result
+
 def save_price(market, ticker, price, date=None):
     """Save the price to a file as a styled HTML page using the template."""
     if date is None:
         date = datetime.datetime.now().strftime("%Y-%m-%d")
     
     ticker_dir = DATA_DIR / market / ticker
+    ticker_dir.mkdir(parents=True, exist_ok=True)
+    
     currency = MARKETS[market]["currency"]
+    currency_code = get_currency_code(currency)
     
     # Load the HTML template
     try:
-        template_path = Path("sample-price-display.html")
+        template_path = Path("template.html")
         with open(template_path, "r") as template_file:
             html_template = template_file.read()
         
-        # Replace placeholders with actual values
-        html_content = (html_template
-            .replace('id="ticker">AAPL', f'id="ticker">{ticker}')
-            .replace('id="currency">$', f'id="currency">{currency}')
-            .replace('id="price">182.63', f'id="price">{price}')
-            .replace('id="date">2023-05-15', f'id="date">{date}')
-            .replace('id="market">us', f'id="market">{market}')
-            .replace('<title>AAPL Price - Sample</title>', f'<title>{ticker} Price - {date}</title>')
-        )
+        # Define replacements
+        replacements = {
+            'TICKER': ticker,
+            'CURRENCY': currency,
+            'PRICE': price,
+            'DATE': date,
+            'MARKET': market,
+            'CURRENCY_CODE': currency_code,
+            'WARNING_MESSAGE': '',
+            'ERROR_MESSAGE': ''
+        }
+        
+        # Render the template
+        html_content = render_template(html_template, replacements)
     except FileNotFoundError:
         print(f"Warning: Template file {template_path} not found. Using fallback template.")
         # Fallback to a minimal template if the file is not found
@@ -379,7 +404,10 @@ def save_error_page(market, ticker, error_message, date=None):
         date = datetime.datetime.now().strftime("%Y-%m-%d")
     
     ticker_dir = DATA_DIR / market / ticker
+    ticker_dir.mkdir(parents=True, exist_ok=True)
+    
     currency = MARKETS[market]["currency"]
+    currency_code = get_currency_code(currency)
     
     # Check if there's a latest successful price we can show
     latest_txt_path = ticker_dir / "latest.txt"
@@ -405,55 +433,49 @@ def save_error_page(market, ticker, error_message, date=None):
     
     # Load the HTML template
     try:
-        template_path = Path("sample-price-display.html")
+        template_path = Path("template.html")
         with open(template_path, "r") as template_file:
             html_template = template_file.read()
         
-        # Add error styling to the template
-        error_style = """
-        .error-message {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            text-align: left;
-        }
-        .warning-message {
-            background-color: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 0.5rem;
-            font-size: 0.8rem;
-        }
-        """
-        html_template = html_template.replace("</style>", f"{error_style}</style>")
-        
-        # Create error content
-        error_content = f'<div class="error-message" id="error">{error_message}</div>'
-        
         if latest_price:
             # Show the latest price with a warning
-            html_content = (html_template
-                .replace('id="ticker">AAPL', f'id="ticker">{ticker}')
-                .replace('id="currency">$', f'id="currency">{currency}')
-                .replace('id="price">182.63', f'id="price">{latest_price}')
-                .replace('id="date">2023-05-15', f'id="date">{last_success_date or "Unknown"}')
-                .replace('id="market">us', f'id="market">{market}')
-                .replace('<title>AAPL Price - Sample</title>', f'<title>{ticker} Price - Error</title>')
-            )
+            warning_message = f'<div class="warning-message" id="warning">This is the last known price from {last_success_date or "a previous fetch"}. Current price fetch failed.</div>'
+            error_content = f'<div class="error-message" id="error">{error_message}</div>'
             
-            # Add warning after the price
-            warning = f'<div class="warning-message" id="warning">This is the last known price from {last_success_date or "a previous fetch"}. Current price fetch failed.</div>'
-            html_content = html_content.replace('</div>\n    <div class="date"', f'</div>\n    {warning}\n    <div class="date"')
-            
-            # Add error message at the bottom
-            html_content = html_content.replace('</div>\n</body>', f'</div>\n    {error_content}\n</body>')
+            # Define replacements
+            replacements = {
+                'TICKER': ticker,
+                'CURRENCY': currency,
+                'PRICE': latest_price,
+                'DATE': last_success_date or "Unknown",
+                'MARKET': market,
+                'CURRENCY_CODE': currency_code,
+                'WARNING_MESSAGE': warning_message,
+                'ERROR_MESSAGE': error_content
+            }
         else:
-            # No previous price available, show a minimal error page
-            html_content = f"""<!DOCTYPE html>
+            # No previous price available
+            error_content = f'<div class="error-message" id="error"><strong>Error fetching price:</strong><br>{error_message}</div>'
+            
+            # Define replacements for minimal error display
+            replacements = {
+                'TICKER': ticker,
+                'CURRENCY': '',
+                'PRICE': 'N/A',
+                'DATE': date,
+                'MARKET': market,
+                'CURRENCY_CODE': currency_code,
+                'WARNING_MESSAGE': '',
+                'ERROR_MESSAGE': error_content
+            }
+        
+        # Render the template
+        html_content = render_template(html_template, replacements)
+        
+    except FileNotFoundError:
+        print(f"Warning: Template file {template_path} not found. Using fallback template.")
+        # Fallback to a minimal error template
+        html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
