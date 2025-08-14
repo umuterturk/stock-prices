@@ -4,7 +4,8 @@ MARKETS = {
             "TI2",
             "NLE",
             "PPB",
-            "IOG"
+            "IOG",
+            "TI1",
         ],
         "crawler": "tefas",
         "currency": "₺",
@@ -13,6 +14,7 @@ MARKETS = {
             "NLE":"NUROL PORTFÖY EMLAK SEKTÖRÜ HİSSE SENEDİ FONU (HİSSE SENEDİ YOĞUN FON)",
             "PPB":"PHİLLİP PORTFÖY BİRİNCİ HİSSE SENEDİ FONU (HİSSE SENEDİ YOĞUN FON)",
             "IOG":"İŞ PORTFÖY GÜMÜŞ SERBEST FON",
+            "TI1":"İŞ PORTFÖY PARA PİYASASI (TL) FONU",
         }
     }
 }
