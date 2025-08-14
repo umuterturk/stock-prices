@@ -2,8 +2,8 @@ name: Update Stock Prices
 
 on:
   schedule:
-    # Run once a day at 8:30 PM UTC (after US market close)
-    - cron: '30 20 * * 1-5'
+    # Run once a day at 8:00 PM Istanbul time (5:00 PM UTC)
+    - cron: '0 17 * * 1-5'
   workflow_dispatch:  # Allow manual triggering
 
 jobs:

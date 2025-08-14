@@ -6,36 +6,12 @@ Stock price crawler that fetches daily prices and saves them in a GitHub Pages f
 import datetime
 import requests
 import time
+from markets import MARKETS
 from pathlib import Path
 from bs4 import BeautifulSoup
 from lxml import etree
 
 # Market configuration with tickers and crawler functions
-MARKETS = {
-    "us": {
-        "tickers": [],
-        # "tickers": ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "JPM", "V", "WMT"],
-        "crawler": "yahoo",
-        "currency": "$"
-    },
-    "uk": {
-        "tickers": [],
-        # "tickers": ["BARC.L", "HSBA.L", "BP.L", "SHEL.L", "ULVR.L"],
-        "crawler": "yahoo",
-        "currency": "£"
-    },
-    "eu": {
-        "tickers": [],
-        # "tickers": ["AIR.PA", "ASML.AS", "SAP.DE", "SAN.MC", "ENEL.MI"],
-        "crawler": "yahoo",
-        "currency": "€"
-    },
-    "tr-tefas": {
-        "tickers": ["HFA", "YAY", "TTE", "TI2", "AFT", "IIE", "BDS"],
-        "crawler": "tefas",
-        "currency": "₺"
-    }
-}
 
 # Base directory for storing price data
 DATA_DIR = Path("data")
@@ -515,6 +491,107 @@ def save_error_page(market, ticker, error_message, date=None):
     except Exception as e:
         print(f"Error creating error page for {ticker}: {e}")
 
+def update_index_html():
+    """Update the index.html file with links to all generated tickers."""
+    print("Updating index.html with links to all tickers...")
+    
+    # Dictionary to store all active tickers by market
+    active_tickers = {}
+    
+    # Scan the data directory to find all active tickers
+    for market_dir in DATA_DIR.iterdir():
+        if not market_dir.is_dir():
+            continue
+        
+        market = market_dir.name
+        active_tickers[market] = []
+        
+        # Find all ticker directories within this market
+        for ticker_dir in market_dir.iterdir():
+            if ticker_dir.is_dir() and (ticker_dir / "latest.html").exists():
+                ticker = ticker_dir.name
+                
+                # Try to get the latest price
+                price = "N/A"
+                try:
+                    with open(ticker_dir / "latest.txt", "r") as f:
+                        content = f.read().strip()
+                        if not content.startswith("ERROR:"):
+                            price = content
+                except Exception:
+                    pass  # Ignore errors reading price
+                
+                active_tickers[market].append({
+                    "ticker": ticker,
+                    "price": price,
+                    "link": f"data/{market}/{ticker}/latest.html"
+                })
+    
+    # Read the current index.html file
+    try:
+        with open("index.html", "r") as f:
+            index_content = f.read()
+        
+        # Update each market table
+        for market, tickers in active_tickers.items():
+            if not tickers:
+                continue
+            
+            # Find the market section in the HTML
+            market_header = f"<h3>{market.upper()} Market" if market != "tr-tefas" else "<h3>Turkish TEFAS Funds"
+            market_table_start = index_content.find(market_header)
+            
+            if market_table_start == -1:
+                print(f"Could not find section for market {market} in index.html")
+                continue
+            
+            # Find the table for this market
+            table_start = index_content.find("<table>", market_table_start)
+            table_end = index_content.find("</table>", table_start) + 8
+            
+            if table_start == -1 or table_end == 7:  # 7 because -1 + 8 = 7
+                print(f"Could not find table for market {market} in index.html")
+                continue
+            
+            # Extract the table header
+            header_end = index_content.find("</tr>", table_start) + 5
+            table_header = index_content[table_start:header_end]
+            
+            # Create new table rows with links
+            new_rows = []
+            for ticker_info in tickers:
+                ticker = ticker_info["ticker"]
+                price = ticker_info["price"]
+                link = ticker_info["link"]
+                
+                # Get the company/fund name from MARKETS if available
+                name = ticker
+                for config_market, config in MARKETS.items():
+                    if config_market == market and "ticker_names" in config and ticker in config["ticker_names"]:
+                        name = config["ticker_names"][ticker]
+                        break
+                
+                new_rows.append(f"        <tr>\n            <td><a href=\"{link}\">{ticker}</a></td>\n            <td>{name}</td>\n            <td>{price} {MARKETS.get(market, {}).get('currency', '')}</td>\n        </tr>")
+            
+            # Create the new table
+            new_table = f"{table_header}\n{chr(10).join(new_rows)}\n    </table>"
+            
+            # Replace the old table with the new one
+            index_content = index_content[:table_start] + new_table + index_content[table_end:]
+        
+        # Update the last updated timestamp
+        today = datetime.datetime.now().strftime("%B %d, %Y")
+        index_content = index_content.replace("id=\"last-updated\">Loading...</span>", f"id=\"last-updated\">{today}</span>")
+        
+        # Write the updated content back to index.html
+        with open("index.html", "w") as f:
+            f.write(index_content)
+            
+        print("Successfully updated index.html")
+        
+    except Exception as e:
+        print(f"Error updating index.html: {e}")
+
 def main():
     """Main function to fetch and save prices for all tickers."""
     print(f"Starting price crawler at {datetime.datetime.now()}")
@@ -553,6 +630,9 @@ def main():
                 
                 # Add a delay after errors too
                 time.sleep(2)
+    
+    # Update the index.html file with links to all tickers
+    update_index_html()
     
     print(f"\nCompleted at {datetime.datetime.now()}")
     print(f"Summary: {success_count} successful, {error_count} failed")
