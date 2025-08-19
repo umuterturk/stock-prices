@@ -6,6 +6,8 @@ MARKETS = {
             "PPB",
             "IOG",
             "TI1",
+            "BDS",
+            "IML",
         ],
         "crawler": "tefas",
         "currency": "₺",
@@ -15,6 +17,8 @@ MARKETS = {
             "PPB":"PHİLLİP PORTFÖY BİRİNCİ HİSSE SENEDİ FONU (HİSSE SENEDİ YOĞUN FON)",
             "IOG":"İŞ PORTFÖY GÜMÜŞ SERBEST FON",
             "TI1":"İŞ PORTFÖY PARA PİYASASI (TL) FONU",
+            "BDS":"PARDUS PORTFÖY BIST 30 DIŞI ŞİRKETLER HİSSE SENEDİ (TL) FONU (HİSSE SENEDİ YOĞUN FON)",
+            "IML":"İŞ PORTFÖY MODEL PORTFÖY HİSSE SENEDİ (TL) FONU (HİSSE SENEDİ YOĞUN FON)"
         }
     }
 }
