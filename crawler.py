@@ -130,22 +130,35 @@ def render_template(template_content, replacements):
     return result
 
 def save_daily_data(market, all_funds_data, date=None):
-    """Save daily fund data as JSON files."""
+    """Save daily fund data as individual HTML files."""
     if date is None:
         date = datetime.datetime.now().strftime("%Y-%m-%d")
     
     market_dir = DATA_DIR / market
     market_dir.mkdir(parents=True, exist_ok=True)
     
-    # Prepare the data for JSON storage
-    funds_by_code = {}
-    currency = MARKETS[market]["currency"]
+    # Load the HTML template
+    template_path = Path("fund_template.html")
+    if not template_path.exists():
+        print("Error: fund_template.html not found")
+        return
+    
+    with open(template_path, 'r', encoding='utf-8') as f:
+        template_content = f.read()
+    
+    currency = "₺"  # Turkish Lira for TEFAS funds
+    saved_count = 0
     
     if all_funds_data and 'data' in all_funds_data:
         for fund in all_funds_data['data']:
             fund_code = fund.get('FONKODU', '')
             if fund_code:
-                funds_by_code[fund_code] = {
+                # Create directory for this fund code
+                fund_dir = market_dir / fund_code
+                fund_dir.mkdir(parents=True, exist_ok=True)
+                
+                # Prepare fund data
+                fund_data = {
                     'code': fund_code,
                     'name': fund.get('FONUNVAN', ''),
                     'price': fund.get('FIYAT', 0),
@@ -156,20 +169,47 @@ def save_daily_data(market, all_funds_data, date=None):
                     'date': date,
                     'timestamp': fund.get('TARIH', '')
                 }
+                
+                # Format numbers for display
+                price_str = f"{fund_data['price']:.6f}".rstrip('0').rstrip('.')
+                shares_str = f"{fund_data['shares']:,.0f}" if fund_data['shares'] else "0"
+                investors_str = f"{fund_data['investors']:,.0f}" if fund_data['investors'] else "0"
+                portfolio_str = f"{fund_data['portfolio_size']:,.2f}".rstrip('0').rstrip('.') if fund_data['portfolio_size'] else "0"
+                avg_portfolio_per_investor_str = f"{fund_data['portfolio_size'] / fund_data['investors']:.2f}".rstrip('0').rstrip('.') if fund_data['portfolio_size'] and fund_data['investors'] else "0"
+                # Replace template placeholders
+                html_content = template_content
+                replacements = {
+                    'FUND_CODE': fund_data['code'],
+                    'FUND_NAME': fund_data['name'],
+                    'CURRENCY': fund_data['currency'],
+                    'PRICE': price_str,
+                    'SHARES': shares_str,
+                    'INVESTORS': investors_str,
+                    'PORTFOLIO_SIZE': portfolio_str,
+                    'DATE': fund_data['date'],
+                    'TIMESTAMP': fund_data['timestamp'],
+                    'AVG_PORTFOLIO_PER_INVESTOR': avg_portfolio_per_investor_str
+                }
+                
+                for placeholder, value in replacements.items():
+                    html_content = html_content.replace(f'{{{{{placeholder}}}}}', str(value))
+                
+                # Save HTML file for this date
+                html_filename = f"{date}.html"
+                html_path = fund_dir / html_filename
+                
+                with open(html_path, 'w', encoding='utf-8') as f:
+                    f.write(html_content)
+                
+                # Create/update latest.html symlink or copy
+                latest_path = fund_dir / "latest.html"
+                if latest_path.exists():
+                    latest_path.unlink()
+                latest_path.symlink_to(html_filename)
+                
+                saved_count += 1
     
-    # Save as daily JSON file
-    json_filename = f"{date}.json"
-    json_path = market_dir / json_filename
-    
-    with open(json_path, 'w', encoding='utf-8') as f:
-        json.dump(funds_by_code, f, ensure_ascii=False, indent=2)
-    
-    # Also save as latest.json for convenience
-    latest_path = market_dir / "latest.json"
-    with open(latest_path, 'w', encoding='utf-8') as f:
-        json.dump(funds_by_code, f, ensure_ascii=False, indent=2)
-    
-    print(f"Saved {len(funds_by_code)} funds to {json_path}")
+    print(f"Saved {saved_count} fund HTML files for {date}")
 
 
 
@@ -187,17 +227,17 @@ def main():
         all_funds_data = fetch_all_tefas_data()
         
         if all_funds_data:
-            # Save all the data as JSON
+            # Save all the data as individual HTML files
             save_daily_data("tr-tefas", all_funds_data)
             
         else:
             print("Failed to fetch TEFAS data")
-            error_count += len(config["tickers"])
+            error_count += 1
             
     except Exception as e:
         error_message = f"Exception while processing TEFAS market: {str(e)}"
         print(error_message)
-        error_count += len(config["tickers"])
+        error_count += 1
 
     
     # Update the index.html file with links to all tickers (TODO: Update for JSON approach)
