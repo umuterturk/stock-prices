@@ -179,7 +179,6 @@ def main():
     """Main function to fetch and save prices for all tickers."""
     print(f"Starting price crawler at {datetime.datetime.now()}")
     
-    ensure_directories()
     success_count = 0
     error_count = 0
     

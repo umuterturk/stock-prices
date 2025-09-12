@@ -266,7 +266,7 @@
 
         <div id="content">
             <div class="loading">
-                <p>Enter a fund code and date to view data</p>
+                <p>Enter a fund code to view data (date is optional)</p>
             </div>
         </div>
 
@@ -297,12 +297,14 @@
             }
 
             init() {
-                // Set today's date as default
-                const today = new Date().toISOString().split('T')[0];
-                this.fundDateInput.value = today;
-                
-                // Parse URL parameters
+                // Parse URL parameters first
                 this.parseUrlParams();
+                
+                // Set today's date as default only if no date was provided in URL
+                if (!this.fundDateInput.value) {
+                    const today = new Date().toISOString().split('T')[0];
+                    this.fundDateInput.value = today;
+                }
                 
                 // Add event listeners
                 this.fundCodeInput.addEventListener('input', () => this.handleInputChange());
@@ -335,17 +337,21 @@
                 const code = this.fundCodeInput.value.trim().toUpperCase();
                 const date = this.fundDateInput.value;
                 
-                if (code && date) {
-                    const url = new URL(window.location);
+                const url = new URL(window.location);
+                
+                if (code) {
                     url.searchParams.set('code', code);
-                    url.searchParams.set('date', date);
-                    window.history.pushState({}, '', url);
                 } else {
-                    const url = new URL(window.location);
                     url.searchParams.delete('code');
-                    url.searchParams.delete('date');
-                    window.history.pushState({}, '', url);
                 }
+                
+                if (date) {
+                    url.searchParams.set('date', date);
+                } else {
+                    url.searchParams.delete('date');
+                }
+                
+                window.history.pushState({}, '', url);
             }
 
             handleInputChange() {
@@ -354,10 +360,10 @@
                 const code = this.fundCodeInput.value.trim();
                 const date = this.fundDateInput.value;
                 
-                if (code && date) {
+                if (code) {
                     this.loadFundData();
                 } else {
-                    this.showMessage('Enter a fund code and date to view data');
+                    this.showMessage('Enter a fund code to view data');
                 }
             }
 
@@ -381,22 +387,50 @@
                 const code = this.fundCodeInput.value.trim().toUpperCase();
                 const requestedDate = this.fundDateInput.value;
                 
-                if (!code || !requestedDate) return;
+                if (!code) return;
                 
                 this.showLoading();
                 
                 try {
-                    // Try to find data for the requested date or go back up to 7 days
-                    const result = await this.findFundDataWithFallback(code, requestedDate);
+                    let result;
+                    
+                    if (requestedDate) {
+                        // Try to find data for the requested date or go back up to 7 days
+                        result = await this.findFundDataWithFallback(code, requestedDate);
+                    } else {
+                        // Use latest.json when no date is provided
+                        result = await this.findFundDataFromLatest(code);
+                    }
                     
                     if (result.found) {
                         this.displayFundData(result.data, result.actualDate);
                     } else {
-                        this.showFundNotFound(code, requestedDate);
+                        this.showFundNotFound(code, requestedDate || 'latest');
                     }
                 } catch (error) {
                     this.showError(`Error loading data: ${error.message}`);
                 }
+            }
+
+            async findFundDataFromLatest(code) {
+                try {
+                    const response = await fetch('./latest.json');
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        if (data[code]) {
+                            return {
+                                found: true,
+                                data: data[code],
+                                actualDate: data[code].date || 'latest'
+                            };
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading latest data:', error);
+                }
+                
+                return { found: false };
             }
 
             async findFundDataWithFallback(code, requestedDate) {
